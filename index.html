@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Analytics Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Dashboard Header -->
+    <header class="dashboard-header">
+        <div class="header-left">
+            <div class="logo">
+                <i class="fab fa-github"></i>
+                <span>GitHub Analytics</span>
+            </div>
+            <nav class="main-nav">
+                <a href="#dashboard" class="nav-item active">
+                    <i class="fas fa-chart-line"></i>
+                    Dashboard
+                </a>
+                <a href="#profiles" class="nav-item">
+                    <i class="fas fa-users"></i>
+                    Profiles
+                </a>
+                <a href="#repositories" class="nav-item">
+                    <i class="fas fa-code-branch"></i>
+                    Repositories
+                </a>
+                <a href="#analytics" class="nav-item">
+                    <i class="fas fa-chart-bar"></i>
+                    Analytics
+                </a>
+            </nav>
+        </div>
+        <div class="header-right">
+            <div class="search-container">
+                <i class="fas fa-search"></i>
+                <input type="text" id="globalSearch" placeholder="Search users, repos..." />
+            </div>
+            <button class="notification-btn">
+                <i class="fas fa-bell"></i>
+                <span class="notification-badge">3</span>
+            </button>
+            <div class="theme-toggle" id="themeToggle" role="button" tabindex="0" aria-label="Toggle dark mode" title="Switch to dark mode">
+                <i class="fas fa-moon"></i>
+            </div>
+            <button class="voice-toggle" id="voiceToggle" title="Voice Commands">
+                <i class="fas fa-microphone-slash"></i>
+            </button>
+            <button class="realtime-toggle" id="realtimeToggle" title="Real-time Updates">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+            <div class="user-menu">
+                <img src="/placeholder.svg?height=32&width=32" alt="User" class="user-avatar" />
+                <span class="user-name">Admin</span>
+                <i class="fas fa-chevron-down"></i>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Dashboard Layout -->
+    <div class="dashboard-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-section">
+                <h3>Quick Actions</h3>
+                <div class="quick-actions">
+                    <button class="action-card" id="analyzeBtn" data-tooltip="Focus search input to analyze a profile" aria-label="Analyze GitHub Profile">
+                        <i class="fas fa-search"></i>
+                        <span>Analyze Profile</span>
+                    </button>
+                    <button class="action-card" id="exportBtn" data-tooltip="Export data or settings" aria-label="Export Data">
+                        <i class="fas fa-download"></i>
+                        <span>Export Data</span>
+                    </button>
+                    <button class="action-card" id="shareBtn" data-tooltip="Share dashboard or invite others" aria-label="Share Report">
+                        <i class="fas fa-share"></i>
+                        <span>Share Report</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>Recent Profiles</h3>
+                <div class="recent-profiles" id="recentProfiles">
+                    <div class="profile-item">
+                        <img src="/placeholder.svg?height=24&width=24" alt="octocat" />
+                        <div class="profile-info">
+                            <span class="profile-name">octocat</span>
+                            <span class="profile-time">2 hours ago</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>Saved Reports</h3>
+                <div class="saved-reports">
+                    <div class="report-item">
+                        <i class="fas fa-file-alt"></i>
+                        <span>Q4 Analysis</span>
+                        <i class="fas fa-download"></i>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Search Section -->
+            <div class="search-section" id="searchSection">
+                <div class="search-card">
+                    <h2>Analyze GitHub Profile</h2>
+                    <p>Enter a GitHub username to generate comprehensive analytics and insights</p>
+                    <div class="search-form">
+                        <div class="input-group">
+                            <i class="fas fa-user"></i>
+                            <input type="text" id="usernameInput" placeholder="Enter GitHub username..." />
+                            <button id="searchBtn" class="btn-primary">
+                                <i class="fas fa-search"></i>
+                                Analyze
+                            </button>
+                        </div>
+                        <div class="search-suggestions" id="searchSuggestions"></div>
+                    </div>
+                    <div class="quick-profiles">
+                        <span>Try:</span>
+                        <button class="quick-profile" data-username="octocat">octocat</button>
+                        <button class="quick-profile" data-username="torvalds">torvalds</button>
+                        <button class="quick-profile" data-username="gaearon">gaearon</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loading State -->
+            <div id="loadingState" class="loading-state hidden">
+                <div class="loading-card">
+                    <div class="loading-spinner"></div>
+                    <h3>Analyzing Profile</h3>
+                    <p id="loadingStatus">Fetching user data...</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Error State -->
+            <div id="errorState" class="error-state hidden">
+                <div class="error-card">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h3>Analysis Failed</h3>
+                    <p id="errorMessage">User not found. Please check the username and try again.</p>
+                    <button id="retryBtn" class="btn-secondary">
+                        <i class="fas fa-redo"></i>
+                        Try Again
+                    </button>
+                </div>
+            </div>
+
+            <!-- Dashboard Content -->
+            <div id="dashboardContent" class="dashboard-content hidden">
+                <!-- Profile Overview -->
+                <div class="profile-overview">
+                    <div class="profile-card">
+                        <div class="profile-header">
+                            <img id="userAvatar" src="/placeholder.svg?height=80&width=80" alt="User Avatar" class="profile-avatar" />
+                            <div class="profile-details">
+                                <h1 id="userName">Loading...</h1>
+                                <p id="userLogin">@loading</p>
+                                <p id="userBio">Loading bio...</p>
+                                <div class="profile-meta">
+                                    <span id="userLocation"><i class="fas fa-map-marker-alt"></i> Location</span>
+                                    <span id="userCompany"><i class="fas fa-building"></i> Company</span>
+                                    <span id="joinDate"><i class="fas fa-calendar"></i> Joined</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="profile-actions">
+                            <button class="btn-outline" id="viewGithubBtn">
+                                <i class="fab fa-github"></i>
+                                View on GitHub
+                            </button>
+                            <button class="btn-outline" id="exportBtn">
+                                <i class="fas fa-download"></i>
+                                Export
+                            </button>
+                            <button class="btn-outline" id="shareBtn">
+                                <i class="fas fa-share"></i>
+                                Share
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Key Metrics -->
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <h3>Followers</h3>
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="metric-value" id="followersCount">0</div>
+                        <div class="metric-change positive">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>+12% this month</span>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <h3>Repositories</h3>
+                            <i class="fas fa-code-branch"></i>
+                        </div>
+                        <div class="metric-value" id="reposCount">0</div>
+                        <div class="metric-change neutral">
+                            <i class="fas fa-minus"></i>
+                            <span>No change</span>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <h3>Total Stars</h3>
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <div class="metric-value" id="starsCount">0</div>
+                        <div class="metric-change positive">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>+8% this week</span>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <h3>Total Forks</h3>
+                            <i class="fas fa-code-branch"></i>
+                        </div>
+                        <div class="metric-value" id="forksCount">0</div>
+                        <div class="metric-change positive">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>+15% this week</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Section -->
+                <div class="charts-section">
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Language Distribution</h3>
+                            <div class="chart-controls">
+                                <button class="chart-control active" data-view="pie">
+                                    <i class="fas fa-chart-pie"></i>
+                                </button>
+                                <button class="chart-control" data-view="bar">
+                                    <i class="fas fa-chart-bar"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="chart-content">
+                            <div id="languageChart" class="chart-container">
+                                <canvas id="languageCanvas"></canvas>
+                            </div>
+                            <div class="language-legend" id="languageLegend"></div>
+                        </div>
+                    </div>
+
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Activity Timeline</h3>
+                            <div class="time-filters">
+                                <button class="time-filter active" data-period="7d">7D</button>
+                                <button class="time-filter" data-period="30d">30D</button>
+                                <button class="time-filter" data-period="90d">90D</button>
+                            </div>
+                        </div>
+                        <div class="chart-content">
+                            <div id="activityChart" class="chart-container">
+                                <canvas id="activityCanvas"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Data Tables Section -->
+                <div class="tables-section">
+                    <div class="table-card">
+                        <div class="table-header">
+                            <h3>Top Repositories</h3>
+                            <div class="table-controls">
+                                <div class="search-box">
+                                    <i class="fas fa-search"></i>
+                                    <input type="text" id="repoSearch" placeholder="Search repositories..." />
+                                </div>
+                                <select id="repoSort" class="sort-select">
+                                    <option value="stars">Sort by Stars</option>
+                                    <option value="forks">Sort by Forks</option>
+                                    <option value="updated">Sort by Updated</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="table-content">
+                            <table class="data-table" id="repositoriesTable">
+                                <thead>
+                                    <tr>
+                                        <th>Repository</th>
+                                        <th>Language</th>
+                                        <th>Stars</th>
+                                        <th>Forks</th>
+                                        <th>Updated</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="repositoriesBody">
+                                    <!-- Repository rows will be inserted here -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="table-pagination">
+                            <div class="pagination-info">
+                                Showing <span id="paginationInfo">1-10 of 50</span> repositories
+                            </div>
+                            <div class="pagination-controls">
+                                <button class="pagination-btn" id="prevPage" disabled>
+                                    <i class="fas fa-chevron-left"></i>
+                                </button>
+                                <span class="page-numbers" id="pageNumbers">
+                                    <button class="page-btn active">1</button>
+                                    <button class="page-btn">2</button>
+                                    <button class="page-btn">3</button>
+                                </span>
+                                <button class="pagination-btn" id="nextPage">
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-card">
+                        <div class="table-header">
+                            <h3>Recent Activity</h3>
+                            <div class="activity-filters">
+                                <button class="activity-filter active" data-type="all">All</button>
+                                <button class="activity-filter" data-type="push">Pushes</button>
+                                <button class="activity-filter" data-type="pr">Pull Requests</button>
+                                <button class="activity-filter" data-type="issues">Issues</button>
+                            </div>
+                        </div>
+                        <div class="activity-timeline" id="activityTimeline">
+                            <!-- Activity items will be inserted here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Insights Section -->
+                <div class="insights-section">
+                    <div class="insight-card">
+                        <div class="insight-header">
+                            <h3>Developer Insights</h3>
+                            <i class="fas fa-brain"></i>
+                        </div>
+                        <div class="insights-grid">
+                            <div class="insight-item">
+                                <div class="insight-label">Primary Language</div>
+                                <div class="insight-value" id="primaryLanguage">JavaScript</div>
+                            </div>
+                            <div class="insight-item">
+                                <div class="insight-label">Coding Frequency</div>
+                                <div class="insight-value" id="codingFrequency">Daily</div>
+                            </div>
+                            <div class="insight-item">
+                                <div class="insight-label">Collaboration Level</div>
+                                <div class="insight-value" id="collaborationLevel">High</div>
+                            </div>
+                            <div class="insight-item">
+                                <div class="insight-label">Project Diversity</div>
+                                <div class="insight-value" id="projectDiversity">Moderate</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="recommendations-card">
+                        <div class="recommendations-header">
+                            <h3>Recommendations</h3>
+                            <i class="fas fa-lightbulb"></i>
+                        </div>
+                        <div class="recommendations-list" id="recommendationsList">
+                            <!-- Recommendations will be inserted here -->
+                        </div>
+                    </div>
+                </div>
+                <div class="advanced-features-section">
+                    <div class="feature-card" id="achievementsCard">
+                        <div class="feature-header">
+                            <h3>Achievements</h3>
+                            <i class="fas fa-trophy"></i>
+                        </div>
+                        <div class="achievements-preview" id="achievementsPreview"></div>
+                        <button class="btn-outline view-all-achievements">View All</button>
+                    </div>
+                    
+                    <div class="feature-card" id="aiInsightsCard">
+                        <div class="feature-header">
+                            <h3>AI Insights</h3>
+                            <i class="fas fa-brain"></i>
+                        </div>
+                        <div class="ai-insights-preview" id="aiInsightsPreview"></div>
+                        <button class="btn-outline view-ai-insights">View Details</button>
+                    </div>
+                    
+                    <div class="feature-card" id="networkCard">
+                        <div class="feature-header">
+                            <h3>Collaboration Network</h3>
+                            <i class="fas fa-project-diagram"></i>
+                        </div>
+                        <div class="network-preview" id="networkPreview"></div>
+                        <button class="btn-outline view-network">Explore Network</button>
+                    </div>
+                </div>
+                <div class="score-widget">
+                    <div class="score-circle">
+                        <div class="score-value" id="developerScore">0</div>
+                        <div class="score-label">Developer Score</div>
+                    </div>
+                    <div class="score-breakdown">
+                        <div class="score-item">
+                            <span class="score-category">Influence</span>
+                            <div class="score-bar">
+                                <div class="score-fill" id="influenceScore"></div>
+                            </div>
+                        </div>
+                        <div class="score-item">
+                            <span class="score-category">Quality</span>
+                            <div class="score-bar">
+                                <div class="score-fill" id="qualityScore"></div>
+                            </div>
+                        </div>
+                        <div class="score-item">
+                            <span class="score-category">Activity</span>
+                            <div class="score-bar">
+                                <div class="score-fill" id="activityScore"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Advanced Features Modals -->
+    <div id="comparisonModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Profile Comparison</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="comparisonContent" class="comparison-grid"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="achievementsModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Achievements & Badges</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="achievementsGrid" class="achievements-grid"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="aiInsightsModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>AI-Powered Insights</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="aiInsightsContent" class="ai-insights-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="customDashboardModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Customize Dashboard</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="dashboardWidgets" class="dashboard-widgets"></div>
+                <div class="modal-actions">
+                    <button class="btn-primary" id="saveDashboard">Save Dashboard</button>
+                    <button class="btn-secondary" id="resetDashboard">Reset to Default</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="advancedSearchModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Advanced Search</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="search-filters">
+                    <div class="filter-group">
+                        <label>Location</label>
+                        <input type="text" id="filterLocation" placeholder="e.g., San Francisco">
+                    </div>
+                    <div class="filter-group">
+                        <label>Primary Language</label>
+                        <select id="filterLanguage">
+                            <option value="">Any Language</option>
+                            <option value="javascript">JavaScript</option>
+                            <option value="python">Python</option>
+                            <option value="java">Java</option>
+                            <option value="typescript">TypeScript</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Minimum Followers</label>
+                        <input type="number" id="filterFollowers" placeholder="100">
+                    </div>
+                    <div class="filter-group">
+                        <label>Minimum Repositories</label>
+                        <input type="number" id="filterRepos" placeholder="10">
+                    </div>
+                    <div class="filter-group">
+                        <label>Company</label>
+                        <input type="text" id="filterCompany" placeholder="e.g., Google">
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn-primary" id="executeAdvancedSearch">Search</button>
+                    <button class="btn-secondary" id="clearFilters">Clear Filters</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="keyboardShortcutsModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Keyboard Shortcuts</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="shortcuts-grid">
+                    <div class="shortcut-item">
+                        <kbd>Ctrl + K</kbd>
+                        <span>Focus search input</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>Ctrl + D</kbd>
+                        <span>Toggle dark/light theme</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>Ctrl + E</kbd>
+                        <span>Export current data</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>Ctrl + S</kbd>
+                        <span>Save current profile</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>Ctrl + Shift + C</kbd>
+                        <span>Compare profiles</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>Ctrl + Shift + V</kbd>
+                        <span>Toggle voice commands</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>?</kbd>
+                        <span>Show this help</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>Esc</kbd>
+                        <span>Close modals</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Action Button -->
+    <div class="fab-container">
+        <button class="fab-main" id="fabMain">
+            <i class="fas fa-plus"></i>
+        </button>
+        <div class="fab-menu hidden" id="fabMenu">
+            <button class="fab-item" id="fabCompare" title="Compare Profiles">
+                <i class="fas fa-balance-scale"></i>
+            </button>
+            <button class="fab-item" id="fabBookmark" title="Bookmark Profile">
+                <i class="fas fa-bookmark"></i>
+            </button>
+            <button class="fab-item" id="fabAI" title="AI Insights">
+                <i class="fas fa-brain"></i>
+            </button>
+            <button class="fab-item" id="fabCustomize" title="Customize Dashboard">
+                <i class="fas fa-cog"></i>
+            </button>
+            <button class="fab-item" id="fabAdvancedSearch" title="Advanced Search">
+                <i class="fas fa-search-plus"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Progress Indicator -->
+    <div class="progress-indicator" id="progressIndicator">
+        <div class="progress-bar-top" id="progressBarTop"></div>
+    </div>
+
+    <!-- Notification Panel -->
+    <div class="notification-panel hidden" id="notificationPanel">
+        <div class="notification-header">
+            <h4>Notifications</h4>
+            <button class="clear-all-notifications">Clear All</button>
+        </div>
+        <div class="notification-list" id="notificationList"></div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
